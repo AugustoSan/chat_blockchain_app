@@ -13,7 +13,7 @@ class ChatProvider extends ChangeNotifier {
   String? _myAddress;
   Map<String, String> _publicKeysCache = {};
 
-  List<Message> get messages => _messages;
+  List<Message> get messages => _messages.reversed.toList();
   bool get isConnected => _isConnected;
   String? get myAddress => _myAddress;
 

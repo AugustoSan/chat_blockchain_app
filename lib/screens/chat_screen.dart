@@ -17,11 +17,21 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ChatProvider>(context);
+    final messagesAll = provider.messages;
     final messages = provider.messages.where((m) =>
-      m.from == widget.contactAddress || m.to == widget.contactAddress).toList();
-
+      m.from == widget.contactAddress.toLowerCase() || m.to == widget.contactAddress.toLowerCase()).toList();
+    print(messages);
+    print(messagesAll);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.contactAddress)),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('From: ${provider.myAddress}', style: TextStyle(fontSize: 16),),
+            Text('To  : ${widget.contactAddress}', style: TextStyle(fontSize: 16),),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           Expanded(

@@ -70,7 +70,7 @@ class WebSocketService {
     _channel?.sink.add(jsonEncode(envelope.toJson()));
   }
 
-  void disconnect() {
-    _channel?.sink.close();
+  void disconnect() async {
+    await _channel?.sink.close();
   }
 }

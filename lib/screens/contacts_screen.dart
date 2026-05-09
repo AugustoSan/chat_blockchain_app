@@ -26,6 +26,7 @@ class ContactsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Text('Cuenta: ${provider.myAddress}'),
             TextField(
               controller: _controller,
               decoration: InputDecoration(labelText: 'Dirección destino (0x...)'),
