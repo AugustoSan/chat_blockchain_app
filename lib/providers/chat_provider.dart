@@ -51,6 +51,16 @@ class ChatProvider extends ChangeNotifier {
         await _api.getPublicKey(jwt, toAddress);
     _publicKeysCache[toAddress] = recipientPublicKey;
     
+    // Crear mensaje local para mostrar inmediatamente
+    final localMessage = Message.withRequired(
+      from: _myAddress!,
+      to: toAddress,
+      timestamp: DateTime.now(),
+      text: text,
+    );
+    _messages.add(localMessage);
+    notifyListeners();
+
     _webSocket?.sendEncryptedMessage(toAddress, text, recipientPublicKey);
   }
 
