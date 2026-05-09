@@ -35,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text('Introduce tu clave privada (hex) para conectarte'),
             TextField(
               controller: _controller,
               decoration: InputDecoration(labelText: 'Clave privada (hex)'),

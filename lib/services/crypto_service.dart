@@ -7,9 +7,10 @@ import 'package:hex/hex.dart';
 
 class CryptoService {
   // Obtener dirección Ethereum desde una clave privada hex
-  static Future<String> addressFromPrivateKey(String privateKeyHex) async {
-    final credentials = EthPrivateKey.fromHex(privateKeyHex);
-    return credentials.address.value.toString();
+  static String getAddressFromPrivateKey(String privateKeyHex) {
+    final privateKey = EthPrivateKey.fromHex(privateKeyHex);
+    final publicKeyBytes = privateKey.address.value; // Uint8List (64 bytes)
+    return '0x${HEX.encode(publicKeyBytes)}';
   }
 
   // Firmar un mensaje (útil para el challenge)
@@ -18,17 +19,14 @@ class CryptoService {
     final messageBytes = utf8.encode(message);
     // Firmar con el prefijo estándar de Ethereum
     final signature = await credentials.signPersonalMessageToUint8List(messageBytes);
-    return HEX.encode(signature);
+    return '0x${HEX.encode(signature)}';
   }
 
   // Obtener clave pública (sin comprimir, formato 0x04...)
   static String getPublicKeyFromPrivate(String privateKeyHex) {
     final privateKey = EthPrivateKey.fromHex(privateKeyHex);
-    final publicKeyBytes = privateKey.address.value; // Uint8List (64 bytes)
-    final uncompressed = Uint8List(65);
-    uncompressed[0] = 0x04;
-    uncompressed.setAll(1, publicKeyBytes);
-    return '0x${HEX.encode(uncompressed)}';
+    final publicKeyBytes = privateKey.publicKey.getEncoded(false); // Uint8List (64 bytes)
+    return HEX.encode(publicKeyBytes);
   }
 
   // --- Cifrado híbrido ---

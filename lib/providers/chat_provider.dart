@@ -18,7 +18,7 @@ class ChatProvider extends ChangeNotifier {
   String? get myAddress => _myAddress;
 
   Future<void> authenticate(String privateKeyHex) async {
-    final address = CryptoService.getPublicKeyFromPrivate(privateKeyHex);
+    final address = CryptoService.getAddressFromPrivateKey(privateKeyHex);
     final challenge = await _api.getChallenge(address);
     final signature = await CryptoService.signMessage(challenge, privateKeyHex);
     final loginData = await _api.login(address, signature, challenge);

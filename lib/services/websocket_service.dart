@@ -11,7 +11,7 @@ class WebSocketService {
   OnMessageReceived? onMessage;
 
   Future<void> connect(String jwt, String myAddress) async {
-    final uri = Uri.parse('ws://localhost:5000/ws?token=$jwt'); // Cambiar puerto/IP
+    final uri = Uri.parse('ws://192.168.1.70:5000/ws?token=$jwt'); // Cambiar puerto/IP
     _channel = WebSocketChannel.connect(uri);
     
     _channel!.stream.listen((data) async {
