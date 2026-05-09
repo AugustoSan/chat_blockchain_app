@@ -15,3 +15,18 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+### Archivo de configuracion
+Para cambiar la IP solo debes de tener el siguiente archivo
+
+```json
+{
+  "API_BASE_URL": "http://localhost"
+}
+````
+
+Y despues ejecutar el siguiente comando 
+
+```bash
+flutter run --dart-define-from-file=config.json
+```

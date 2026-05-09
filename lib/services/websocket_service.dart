@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:chat_blockchain_app/config/app_config.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:chat_blockchain_app/models/message.dart';
-import 'package:chat_blockchain_app/services/crypto_service.dart';
 import 'package:chat_blockchain_app/services/secure_storage.dart';
 
 typedef OnMessageReceived = void Function(Message message);
@@ -11,17 +11,19 @@ class WebSocketService {
   OnMessageReceived? onMessage;
 
   Future<void> connect(String jwt, String myAddress) async {
-    final uri = Uri.parse('ws://192.168.1.70:5000/ws?token=$jwt'); // Cambiar puerto/IP
+    final uri = Uri.parse('${AppConfig.wsUrl}?token=$jwt'); // Cambiar puerto/IP
     _channel = WebSocketChannel.connect(uri);
     
     _channel!.stream.listen((data) async {
       final Map<String, dynamic> json = jsonDecode(data);
       print('Mensaje recibido: $json');
-      final message = Message(
+      final message = Message.withRequired(
         from: json['from'],
         to: json['to'],
+        timestamp: json['timestamp'] != null 
+          ? DateTime.parse(json['timestamp']) 
+          : DateTime.now(),
         text: json['text'],
-        timestamp: DateTime.parse(json['timestamp']),
       );
       onMessage?.call(message);
 
@@ -59,13 +61,13 @@ class WebSocketService {
     //   'from': await SecureStorage.getAddress() ?? '',
     //   'timestamp': DateTime.now().toIso8601String(),
     // };
-    final envelope = {
-      'to': toAddress,
-      'text': text,
-      'from': await SecureStorage.getAddress() ?? '',
-      'timestamp': DateTime.now().toIso8601String(),
-    };
-    _channel?.sink.add(jsonEncode(envelope));
+    final envelope = new Message.withRequired(
+      from: await SecureStorage.getAddress() ?? '',
+      to: toAddress,
+      timestamp: DateTime.now(),
+      text: text,
+    );
+    _channel?.sink.add(jsonEncode(envelope.toJson()));
   }
 
   void disconnect() {
