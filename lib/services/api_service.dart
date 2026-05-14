@@ -1,4 +1,5 @@
 import 'package:chat_blockchain_app/config/app_config.dart';
+import 'package:chat_blockchain_app/models/contacts.dart';
 import 'package:dio/dio.dart';
 // import 'package:chat_blockchain_app/services/secure_storage.dart';
 
@@ -35,5 +36,13 @@ class ApiService {
     final response = await _dio.get('$baseUrl/${AppConfig.getPublicKeyPath(address)}',
         options: Options(headers: {'Authorization': 'Bearer $jwt'}));
     return response.data['publicKey'];
+  }
+
+  Future<List<Contact>> getContacts(String jwt) async {
+    final response = await _dio.get('$baseUrl/${AppConfig.getContactsPath}',
+        options: Options(headers: {'Authorization': 'Bearer $jwt'}));
+    return (response.data['contacts'] as List)
+        .map((e) => Contact.fromJson(e))
+        .toList();
   }
 }

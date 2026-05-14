@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+// import 'package:chat_blockchain_app/services/wallet_connect_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// import 'package:web3dart/web3dart.dart';
 
 class SecureStorage {
   static const _storage = FlutterSecureStorage();
@@ -6,9 +10,19 @@ class SecureStorage {
   static const _keyAddress = 'address';
   static const _keyPublicKey = 'public_key';
   static const _keyJwt = 'jwt';
+  static const _keyContacts = 'contacts';
+  static const _wcSession = 'session';
 
   static Future<void> savePrivateKey(String privateKeyHex) async =>
       await _storage.write(key: _keyPrivate, value: privateKeyHex);
+    
+  static Future<void> saveSession(Object session) async =>
+      await _storage.write(key: _wcSession, value: jsonEncode(session));
+    
+  static Future<String?> getSession() async {
+    return await _storage.read(key: _wcSession);
+  }
+
   static Future<String?> getPrivateKey() async =>
       await _storage.read(key: _keyPrivate);
   
@@ -29,4 +43,12 @@ class SecureStorage {
 
   static Future<void> clearAll() async =>
       await _storage.deleteAll();
+
+  // Contacts (stored as a JSON array string)
+  static Future<void> saveContacts(String contactsJson) async =>
+      await _storage.write(key: _keyContacts, value: contactsJson);
+  static Future<String?> getContacts() async =>
+      await _storage.read(key: _keyContacts);
+  static Future<void> deleteContacts() async =>
+      await _storage.delete(key: _keyContacts);
 }

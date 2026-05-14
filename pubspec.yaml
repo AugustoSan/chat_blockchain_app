@@ -35,13 +35,18 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   web_socket_channel: ^3.0.3
-  web3dart: ^3.0.2
-  pointycastle: ^4.0.0
-  flutter_secure_storage: ^10.1.0
+  web3dart: ^2.7.3
+  pointycastle: ^3.7.4
+  flutter_secure_storage: ^9.2.4
   provider: ^6.1.5+1
   intl: ^0.20.2
   dio: ^5.9.2
   hex: ^0.2.0
+  convert: ^3.1.2
+  crypto: ^3.0.7
+  google_fonts: ^8.1.0
+  qr_flutter: ^4.1.0
+  reown_appkit: ^1.7.6
 
 dev_dependencies:
   flutter_test:

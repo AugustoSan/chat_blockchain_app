@@ -10,4 +10,5 @@ class AppConfig
   static const String challengePath = 'api/User/challenge';
   static const String registerPublicKeyPath = 'api/User/registerPublicKey';
   static String getPublicKeyPath(String address) => 'api/User/validate/$address';
+  static const String getContactsPath = 'api/User/contacts';
 }

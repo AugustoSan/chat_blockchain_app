@@ -1,10 +1,28 @@
+import 'package:chat_blockchain_app/providers/contacts_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:chat_blockchain_app/providers/chat_provider.dart';
 import 'package:chat_blockchain_app/screens/chat_screen.dart';
 
-class ContactsScreen extends StatelessWidget {
+class ContactsScreen extends StatefulWidget {
+  @override
+  State<ContactsScreen> createState() => _ContactsScreenState();
+}
+
+class _ContactsScreenState extends State<ContactsScreen> {
   final TextEditingController _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  void _init() async {
+    final provider = Provider.of<ContactsProvider>(context, listen: false);
+    await provider.loadContactsFromAPI();
+    await provider.loadContacts();
+  }
 
   @override
   Widget build(BuildContext context) {

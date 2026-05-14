@@ -1,15 +1,19 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:pointycastle/export.dart';
 import 'package:web3dart/web3dart.dart';
-// import 'package:pointycastle/export.dart';
+import 'package:convert/convert.dart';
 import 'package:hex/hex.dart';
 
+
 class CryptoService {
+  static final _domainParams = ECDomainParameters('secp256k1');
+
   // Obtener dirección Ethereum desde una clave privada hex
   static String getAddressFromPrivateKey(String privateKeyHex) {
     final privateKey = EthPrivateKey.fromHex(privateKeyHex);
-    final publicKeyBytes = privateKey.address.value; // Uint8List (64 bytes)
+    final publicKeyBytes = privateKey.address.addressBytes; // Uint8List (64 bytes)
     return '0x${HEX.encode(publicKeyBytes)}';
   }
 
@@ -29,99 +33,65 @@ class CryptoService {
     return HEX.encode(publicKeyBytes);
   }
 
-  // --- Cifrado híbrido ---
-  static Uint8List generateSymmetricKey() {
-    final random = Random.secure();
-    return Uint8List.fromList(List.generate(32, (_) => random.nextInt(256)));
+  /// Convierte Uint8List a BigInt (interpretando big-endian)
+  static BigInt _bytesToBigInt(Uint8List bytes) {
+    return BigInt.parse(hex.encode(bytes), radix: 16);
   }
 
-  // static (Uint8List encryptedKey, Uint8List iv, Uint8List ciphertext, Uint8List authTag) 
-  //     encryptMessage(String plainText, String recipientPublicKeyHex) {
-  //   // 1. Generar clave simétrica
-  //   final symmetricKey = generateSymmetricKey();
+  /// Convierte BigInt a Uint8List de tamaño fijo (32 bytes para secp256k1)
+  static Uint8List _bigIntToBytes32(BigInt n) {
+    final hexStr = n.toRadixString(16).padLeft(64, '0');
+    return Uint8List.fromList(hex.decode(hexStr));
+  }
+
+  /// Genera una clave privada aleatoria de 32 bytes
+  Uint8List generateRandomPrivateKey() {
+    final secureRandom = SecureRandom('Fortuna')
+      ..seed(KeyParameter(Uint8List.fromList(List.generate(32, (_) => Random.secure().nextInt(256)))));
+    return secureRandom.nextBytes(32);
+  }
+
+  /// Obtiene la clave pública (no comprimida, 64 bytes) a partir de la privada (Uint8List)
+  static Uint8List privateKeyToPublicKey(Uint8List privateKeyBytes) {
+    final privBigInt = _bytesToBigInt(privateKeyBytes);
+    final ecPrivate = ECPrivateKey(privBigInt, _domainParams);
+    final publicPoint = _domainParams.G * ecPrivate.d!;
+    // La multiplicación puede retornar null en la API de pointycastle
+    if (publicPoint == null) {
+      throw Exception('Failed to derive public key from private key');
+    }
+    final publicBytes = publicPoint.getEncoded(false); // 0x04 + X + Y
+    return Uint8List.sublistView(publicBytes, 1); // eliminar prefijo 0x04
+  }
+
+  static Uint8List computeECDH(Uint8List privateKeyBytes, Uint8List publicKeyBytes) {
+    final privBigInt = _bytesToBigInt(privateKeyBytes);
+    final ecPrivate = ECPrivateKey(privBigInt, _domainParams);
+
+    final fullPublic = Uint8List(65);
+    fullPublic[0] = 0x04; // Prefijo para clave pública no comprimida
+    fullPublic.setRange(1, 65, publicKeyBytes);
+    final publicPoint = _domainParams.curve.decodePoint(fullPublic);
+    if (publicPoint == null) {
+      throw Exception('Failed to decode public key');
+    }
     
-  //   // 2. Cifrar texto con AES-256-GCM
-  //   final iv = Uint8List(12);
-  //   final random = Random.secure();
-  //   for (int i = 0; i < 12; i++) iv[i] = random.nextInt(256);
-    
-  //   final plainBytes = utf8.encode(plainText);
-  //   final cipher = GCMCipher();
-  //   cipher.init(true, AEADParameters(
-  //     KeyParameter(symmetricKey),
-  //     128,
-  //     iv,
-  //     Uint8List(0),
-  //   ));
-  //   final ciphertextWithTag = cipher.process(plainBytes);
-  //   final ciphertext = ciphertextWithTag.sublist(0, plainBytes.length);
-  //   final authTag = ciphertextWithTag.sublist(plainBytes.length);
-    
-  //   // 3. Cifrar clave simétrica con ECIES
-  //   final publicKeyBytes = HEX.decode(recipientPublicKeyHex.replaceFirst('0x', ''));
-  //   final encryptedKey = Ecies.encrypt(publicKeyBytes, symmetricKey);
-    
-  //   return (encryptedKey, iv, ciphertext, authTag);
-  // }
+    final ecPublic = ECPublicKey(publicPoint, _domainParams);
 
-  // static String decryptMessage({
-  //   required String encryptedKeyB64,
-  //   required String ivB64,
-  //   required String ciphertextB64,
-  //   required String authTagB64,
-  //   required String myPrivateKeyHex,
-  // }) {
-  //   final encryptedKey = base64Decode(encryptedKeyB64);
-  //   final iv = base64Decode(ivB64);
-  //   final ciphertext = base64Decode(ciphertextB64);
-  //   final authTag = base64Decode(authTagB64);
-    
-  //   // 1. Descifrar clave simétrica
-  //   final privateKeyBytes = HEX.decode(myPrivateKeyHex.replaceFirst('0x', ''));
-  //   final symmetricKey = Ecies.decrypt(privateKeyBytes, encryptedKey);
-    
-  //   // 2. Descifrar AES-GCM
-  //   final cipher = GCMCipher();
-  //   cipher.init(false, AEADParameters(
-  //     KeyParameter(symmetricKey),
-  //     128,
-  //     iv,
-  //     Uint8List(0),
-  //   ));
-  //   final combined = Uint8List(ciphertext.length + authTag.length);
-  //   combined.setAll(0, ciphertext);
-  //   combined.setAll(ciphertext.length, authTag);
-  //   final plainBytes = cipher.process(combined);
-  //   return utf8.decode(plainBytes);
-  // }
+    final sharedSecret = ecPublic.Q! * ecPrivate.d!;
 
-  // static Future<Map<String, String>> encryptMessageForPublicKey(
-  //     String plainText, String recipientPublicKeyHex) async {
-  //   // 1. Clave efímera (nuevo par por cada cifrado)
-  //   final ephemeralKeyPair = _generateEphemeralKeyPair();
-  //   final ephemeralPublicPoint = ephemeralKeyPair.publicKey as ECPoint;
-  //   final ephemeralPrivate = ephemeralKeyPair.privateKey as ECPrivateKey;
+    if (sharedSecret == null) {
+      throw Exception('Failed to compute shared secret');
+    }
 
-  //   // 2. Clave pública del destinatario
-  //   final recipientPoint = publicKeyHexToPoint(recipientPublicKeyHex);
+    final xCoord = sharedSecret.x!.toBigInteger();
+    if (xCoord == null) {
+      throw Exception('Failed to extract x-coordinate from shared secret');
+    }
+    return _bigIntToBytes32(xCoord);
+  }
 
-  //   // 3. Calcular secreto compartido mediante ECDH
-  //   final sharedSecret = _ecdhSharedSecret(ephemeralPrivate, recipientPoint);
-
-  //   // 4. Derivar clave simétrica (SHA-256 del secreto)
-  //   final symmetricKey = _deriveSymmetricKey(sharedSecret);
-
-  //   // 5. Cifrar el mensaje con AES-256-GCM
-  //   final iv = _generateRandomBytes(12);
-  //   final plainBytes = utf8.encode(plainText);
-  //   final (ciphertext, authTag) = _aesGcmEncrypt(plainBytes, symmetricKey, iv);
-
-  //   // 6. Empaquetar (la clave pública efímera se envía en formato hex sin comprimir)
-  //   return {
-  //     'ephemeralPublicKey': pointToPublicKeyHex(ephemeralPublicPoint),
-  //     'iv': base64Encode(iv),
-  //     'ciphertext': base64Encode(ciphertext),
-  //     'authTag': base64Encode(authTag),
-  //   };
+  // Uint8List encryptWithPublicKey(Uint8List publicKeyBytes, Uint8List data) {
+  //   final ephemeralPrivateKey = generateRandomPrivateKey();
   // }
 }
