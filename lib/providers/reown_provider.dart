@@ -15,6 +15,7 @@ class ReownProvider extends ChangeNotifier {
     //   accessibility: KeychainAccessibility.first_unlock,
     // );
     _appKit = await ReownAppKit.createInstance(
+      logLevel: LogLevel.error,
       projectId: '8ceade25be555c3d49e4d184d7a90c02',
       metadata: const PairingMetadata(
         name: 'Example App',

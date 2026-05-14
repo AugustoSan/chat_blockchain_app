@@ -1,6 +1,7 @@
 // lib/screens/login_screen.dart
 import 'dart:ui';
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
+import 'package:chat_blockchain_app/screens/contacts_screen.dart';
 // import 'package:chat_blockchain_app/services/wallet_connect_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,45 +16,60 @@ class LoginScreenWallet extends StatefulWidget {
 
 class _LoginScreenWalletState extends State<LoginScreenWallet> {
 
-  // ReownAppKitModal? _appKitModal;
+  ReownProvider? _reownProvider; // Referencia local
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      // 2. Asignamos a la variable nullable primero
+      _reownProvider = Provider.of<ReownProvider>(context, listen: false);
+      
+      // 3. Agregamos el listener usando el operador ?.
+      _reownProvider?.addListener(_handleNavigation);
+
+      // 4. Llamamos a init (ya no necesitamos pasar context si el provider lo maneja)
       _init();
     });
   }
   void _init() async {
-    final reownProvider = Provider.of<ReownProvider>(context, listen: false);
-
-    // 2. Inicializar (si no está inicializado ya)
-    if (reownProvider.appKitModal == null) {
-      await reownProvider.initAppKitModal(context);
+    // Verificamos si es nulo antes de usarlo
+    if (_reownProvider != null && _reownProvider!.appKitModal == null) {
+      await _reownProvider!.initAppKitModal(context);
     }
 
-    // print("Provider appKit: ${reownProvider.appKit}");
-    // if (reownProvider.appKit != null) {
-    //   _appKitModal = ReownAppKitModal(
-    //     context: context,
-    //     appKit: reownProvider.appKit!,
-    //   );
-    // }
-    // if (_appKitModal != null) {
-    //   await _appKitModal!.init();
-    // }
     if (mounted) {
       setState(() {});
     }
   }
-  // void _connectMetamask() async {
-  //   WalletConnectService().connect(context);
-  // }
+
+  void _handleNavigation() {
+    // 5. Verificamos conexión de forma segura
+    if (_reownProvider?.appKitModal?.isConnected ?? false) {
+      if (mounted) {
+        // Removemos el listener antes de navegar
+        _reownProvider?.removeListener(_handleNavigation);
+        
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(builder: (_) => ContactsScreen())
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // 6. Limpieza segura: si es nulo, no hace nada; si existe, quita el listener
+    _reownProvider?.removeListener(_handleNavigation);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final reownProvider = Provider.of<ReownProvider>(context);
-
+    final appKitModal = _reownProvider?.appKitModal;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -258,14 +274,13 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
                               ),
                               const SizedBox(height: 32),
                               // Grid de wallets
-                              Row(
-                                children: [
-                                  // Expanded(child: _WalletProviderCard(name: 'Metamask', color: Color(0xFFF6851B), icon: Icons.token, onPressed: _connectMetamask)),
-                                  reownProvider.appKitModal != null ? Expanded(child: AppKitModalConnectButton(appKit: reownProvider.appKitModal!, size: BaseButtonSize.big,)) : Text('Cargando...'),
-                                  SizedBox(width: 16),
-                                  Expanded(child: _WalletProviderCard(name: 'Phantom', color: Color(0xFFAB9FF2), icon: Icons.diamond)),
-                                ],
-                              ),
+                              appKitModal != null ? AppKitModalConnectButton(appKit: appKitModal, size: BaseButtonSize.big,) : Text('Cargando...'),
+                              SizedBox(width: 16),
+                              appKitModal != null ? Visibility(
+                                visible: appKitModal.isConnected,
+                                child: AppKitModalAccountButton(appKitModal: appKitModal),
+                              )
+                              : Text('Cargando...'),
                               const SizedBox(height: 40),
                               // Tarjetas de características de seguridad
                               const _SecurityFeatureCard(
