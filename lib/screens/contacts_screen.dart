@@ -1,4 +1,5 @@
 import 'package:chat_blockchain_app/providers/contacts_provider.dart';
+import 'package:chat_blockchain_app/providers/reown_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:chat_blockchain_app/providers/chat_provider.dart';
@@ -27,15 +28,20 @@ class _ContactsScreenState extends State<ContactsScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ChatProvider>(context);
+    final reownProvider = Provider.of<ReownProvider>(context, listen: false);
+    final myAddress = reownProvider.getAddress();
     return Scaffold(
       appBar: AppBar(
         title: Text('Contactos'),
         actions: [
           IconButton(
             icon: Icon(Icons.exit_to_app),
-            onPressed: () {
+            onPressed: () async {
               provider.logout();
-              Navigator.pushReplacementNamed(context, '/');
+              await reownProvider.logout();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/');
+              }
             },
           )
         ],
@@ -44,7 +50,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('Cuenta: ${provider.myAddress}'),
+            Text('Cuenta: ${myAddress ?? "No conectado"}'),
             TextField(
               controller: _controller,
               decoration: InputDecoration(labelText: 'Dirección destino (0x...)'),

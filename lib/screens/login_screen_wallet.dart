@@ -2,6 +2,7 @@
 import 'dart:ui';
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
 import 'package:chat_blockchain_app/screens/contacts_screen.dart';
+import 'package:chat_blockchain_app/widgets/loading_indicator.dart';
 // import 'package:chat_blockchain_app/services/wallet_connect_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +31,10 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
       // 3. Agregamos el listener usando el operador ?.
       _reownProvider?.addListener(_handleNavigation);
 
+      if (_reownProvider?.appKitModal?.isConnected ?? false) {
+        _handleNavigation();
+      }
+
       // 4. Llamamos a init (ya no necesitamos pasar context si el provider lo maneja)
       _init();
     });
@@ -37,7 +42,7 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
   void _init() async {
     // Verificamos si es nulo antes de usarlo
     if (_reownProvider != null && _reownProvider!.appKitModal == null) {
-      await _reownProvider!.initAppKitModal(context);
+      await _reownProvider!.initAppKitModal();
     }
 
     if (mounted) {
@@ -45,9 +50,19 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
     }
   }
 
+  @override
+  void didChangeDependencies() {
+    if (_reownProvider?.appKitModal?.isConnected ?? false) {
+      _handleNavigation();
+    }
+    super.didChangeDependencies();
+  }
+
   void _handleNavigation() {
+    print("DEBUG: _handleNavigation disparado. isConnected: ${_reownProvider?.appKitModal?.isConnected}");
     // 5. Verificamos conexión de forma segura
     if (_reownProvider?.appKitModal?.isConnected ?? false) {
+      print("DEBUG: Navegando a ContactsScreen...");
       if (mounted) {
         // Removemos el listener antes de navegar
         _reownProvider?.removeListener(_handleNavigation);
@@ -83,7 +98,7 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
             ],
           ),
         ),
-        child: Stack(
+        child: appKitModal == null ? LoadingIndicator() : Stack(
           children: [
             // Patrón geométrico de fondo (puntos)
             Positioned.fill(
@@ -210,7 +225,7 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
                               ),
                               const SizedBox(height: 24),
                               const Text(
-                                'Welcome Back',
+                                'Web3Messenger',
                                 style: TextStyle(
                                   fontFamily: 'SpaceGrotesk',
                                   fontSize: 32,
@@ -220,7 +235,7 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
                               ),
                               const SizedBox(height: 8),
                               const Text(
-                                'Connect your secure wallet to access your encrypted conversations and assets.',
+                                'Conecta tu billetera segura para acceder a tu cuenta.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'Inter',
@@ -230,57 +245,61 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
                               ),
                               const SizedBox(height: 32),
                               // Botón principal Connect Wallet
-                              ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
-                                  minimumSize: const Size(double.infinity, 56),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ).copyWith(
-                                  foregroundColor: MaterialStateProperty.all(
-                                    const Color(0xFF00354A),
-                                  ),
-                                  textStyle: MaterialStateProperty.all(
-                                    const TextStyle(
-                                      fontFamily: 'SpaceGrotesk',
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                child: Ink(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF8ED5FF), Color(0xFF45E3CE)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Container(
-                                    alignment: Alignment.center,
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.account_balance_wallet),
-                                        SizedBox(width: 8),
-                                        Text('Connect Wallet'),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              // ElevatedButton(
+                              //   onPressed: () {},
+                              //   style: ElevatedButton.styleFrom(
+                              //     backgroundColor: Colors.transparent,
+                              //     shadowColor: Colors.transparent,
+                              //     padding: const EdgeInsets.symmetric(vertical: 18),
+                              //     minimumSize: const Size(double.infinity, 56),
+                              //     shape: RoundedRectangleBorder(
+                              //       borderRadius: BorderRadius.circular(16),
+                              //     ),
+                              //   ).copyWith(
+                              //     foregroundColor: MaterialStateProperty.all(
+                              //       const Color(0xFF00354A),
+                              //     ),
+                              //     textStyle: MaterialStateProperty.all(
+                              //       const TextStyle(
+                              //         fontFamily: 'SpaceGrotesk',
+                              //         fontSize: 24,
+                              //         fontWeight: FontWeight.w500,
+                              //       ),
+                              //     ),
+                              //   ),
+                              //   child: Ink(
+                              //     decoration: BoxDecoration(
+                              //       gradient: const LinearGradient(
+                              //         colors: [Color(0xFF8ED5FF), Color(0xFF45E3CE)],
+                              //       ),
+                              //       borderRadius: BorderRadius.circular(16),
+                              //     ),
+                              //     child: Container(
+                              //       alignment: Alignment.center,
+                              //       child: const Row(
+                              //         mainAxisAlignment: MainAxisAlignment.center,
+                              //         children: [
+                              //           Icon(Icons.account_balance_wallet),
+                              //           SizedBox(width: 8),
+                              //           Text('Connect Wallet'),
+                              //         ],
+                              //       ),
+                              //     ),
+                              //   ),
+                              // ),
                               const SizedBox(height: 32),
                               // Grid de wallets
-                              appKitModal != null ? AppKitModalConnectButton(appKit: appKitModal, size: BaseButtonSize.big,) : Text('Cargando...'),
+                              // AppKitModalConnectButton(appKit: appKitModal, size: BaseButtonSize.big,),
+                              AppKitModalAccountButton(
+                                appKitModal: appKitModal,
+                                // custom: _WalletProviderCard(name: 'Connect Wallet', color: Color(0xFFF6851B), icon: Icons.token, onPressed: appKitModal.openModalView),
+                                custom: _WalletProviderCard(name: 'Connect Wallet', color: Color(0xFFAB9FF2), icon: Icons.diamond, onPressed: appKitModal.openModalView),
+                              ),
                               SizedBox(width: 16),
-                              appKitModal != null ? Visibility(
+                              Visibility(
                                 visible: appKitModal.isConnected,
                                 child: AppKitModalAccountButton(appKitModal: appKitModal),
-                              )
-                              : Text('Cargando...'),
+                              ),
                               const SizedBox(height: 40),
                               // Tarjetas de características de seguridad
                               const _SecurityFeatureCard(
@@ -366,17 +385,21 @@ class _WalletProviderCard extends StatelessWidget {
   final String name;
   final Color color;
   final IconData icon;
+  final VoidCallback? onPressed;
 
   const _WalletProviderCard({
     required this.name,
     required this.color,
     required this.icon,
+    this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      onTap: onPressed,
       child: Container(
+        width: 120,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: const Color(0xFF1B2024),
