@@ -1,11 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>CipherChat Link Mode Host</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        a { color: #007bff; text-decoration: none; font-weight: bold; }
+        .status { margin-top: 10px; font-size: 0.9rem; color: #666; }
+    </style>
 </head>
 <body>
-    
+    <div class="card">
+        <h1>CipherChat Link Mode</h1>
+        <p>Este dominio está configurado para manejar App Links de Android.</p>
+        <p>Verificar configuración: 
+            <a href="./.well-known/assetlinks.json">assetlinks.json</a>
+        </p>
+        <div class="status" id="check">Comprobando configuración...</div>
+    </div>
+
+    <script>
+        // Script simple para verificar si el archivo es accesible
+        fetch('./.well-known/assetlinks.json')
+            .then(response => {
+                if(response.ok) {
+                    document.getElementById('check').innerText = "✅ El archivo .well-known/assetlinks.json es accesible.";
+                    document.getElementById('check').style.color = "green";
+                } else {
+                    document.getElementById('check').innerText = "❌ Error: No se pudo encontrar el archivo JSON.";
+                    document.getElementById('check').style.color = "red";
+                }
+            })
+            .catch(() => {
+                document.getElementById('check').innerText = "❌ Error al intentar acceder al archivo.";
+            });
+    </script>
 </body>
 </html>
