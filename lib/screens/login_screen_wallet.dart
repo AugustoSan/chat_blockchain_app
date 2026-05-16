@@ -1,5 +1,6 @@
 // lib/screens/login_screen.dart
 import 'dart:ui';
+import 'package:chat_blockchain_app/providers/chat_provider.dart';
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
 import 'package:chat_blockchain_app/screens/contacts_screen.dart';
 import 'package:chat_blockchain_app/widgets/loading_indicator.dart';
@@ -23,19 +24,8 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      // 2. Asignamos a la variable nullable primero
       _reownProvider = Provider.of<ReownProvider>(context, listen: false);
-      
-      // 3. Agregamos el listener usando el operador ?.
-      _reownProvider?.addListener(_handleNavigation);
-
-      if (_reownProvider?.appKitModal?.isConnected ?? false) {
-        _handleNavigation();
-      }
-
-      // 4. Llamamos a init (ya no necesitamos pasar context si el provider lo maneja)
+      _reownProvider?.addListener(_handleStateChange); // Cambiamos el nombre para que sea más claro
       _init();
     });
   }
@@ -50,41 +40,55 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    if (_reownProvider?.appKitModal?.isConnected ?? false) {
-      _handleNavigation();
-    }
-    super.didChangeDependencies();
-  }
-
-  void _handleNavigation() {
-    print("DEBUG: _handleNavigation disparado. isConnected: ${_reownProvider?.appKitModal?.isConnected}");
-    // 5. Verificamos conexión de forma segura
-    if (_reownProvider?.appKitModal?.isConnected ?? false) {
-      print("DEBUG: Navegando a ContactsScreen...");
-      if (mounted) {
-        // Removemos el listener antes de navegar
-        _reownProvider?.removeListener(_handleNavigation);
-        
-        Navigator.pushReplacement(
-          context, 
-          MaterialPageRoute(builder: (_) => ContactsScreen())
-        );
-      }
+  void _handleStateChange() {
+    if (mounted) {
+      setState(() {}); // Refresca la pantalla para mostrar/ocultar botones
     }
   }
 
   @override
   void dispose() {
-    // 6. Limpieza segura: si es nulo, no hace nada; si existe, quita el listener
-    _reownProvider?.removeListener(_handleNavigation);
+    _reownProvider?.removeListener(_handleStateChange);
     super.dispose();
+  }
+
+  Future<void> _startLoginFlow() async {
+    try {
+      // Mostrar un loader (puedes usar un showDialog con un CircularProgressIndicator)
+      _showLoading();
+
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      
+      // Ejecutamos la firma y el login al API
+      await chatProvider.authenticate(context);
+      
+      if (mounted) {
+        // Si todo sale bien, navegamos
+        Navigator.pop(context); // Quitar loader
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => ContactsScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Quitar loader
+      ("Error al iniciar sesión: $e");
+    }
+  }
+
+  void _showLoading() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final appKitModal = _reownProvider?.appKitModal;
+    final isConnected = _reownProvider?.appKitModal?.isConnected ?? false;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -293,7 +297,12 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
                               AppKitModalAccountButton(
                                 appKitModal: appKitModal,
                                 // custom: _WalletProviderCard(name: 'Connect Wallet', color: Color(0xFFF6851B), icon: Icons.token, onPressed: appKitModal.openModalView),
-                                custom: _WalletProviderCard(name: 'Connect Wallet', color: Color(0xFFAB9FF2), icon: Icons.diamond, onPressed: appKitModal.openModalView),
+                                custom: _WalletProviderCard(name: isConnected ? "Firmar Mensaje y Entrar" : "Conectar Wallet", color: Color(0xFFAB9FF2), icon: Icons.diamond, onPressed: () async {
+                                  if(!isConnected)
+                                    appKitModal.openModalView();
+                                  else
+                                    _startLoginFlow();
+                                }),
                               ),
                               SizedBox(width: 16),
                               Visibility(

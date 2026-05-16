@@ -86,7 +86,7 @@
 		<!-- your own custom scheme -->
 		<!-- Should be the same you set on Redirect.native on Flutter side -->
 		<!-- Be mind of removing :// for this step -->
-		<string>exampleapp</string>
+			<string>chatblockchain</string>
 		</array>
 	</dict>
 	</array>

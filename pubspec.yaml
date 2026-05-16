@@ -47,6 +47,7 @@ dependencies:
   google_fonts: ^8.1.0
   qr_flutter: ^4.1.0
   reown_appkit: ^1.7.6
+  app_links: ^7.0.0
 
 dev_dependencies:
   flutter_test:
