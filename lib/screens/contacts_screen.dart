@@ -1,3 +1,4 @@
+import 'package:chat_blockchain_app/providers/auth_provider.dart';
 import 'package:chat_blockchain_app/providers/contacts_provider.dart';
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<ChatProvider>(context);
     final reownProvider = Provider.of<ReownProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final myAddress = reownProvider.getAddress();
     return Scaffold(
       appBar: AppBar(
@@ -37,7 +39,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
           IconButton(
             icon: Icon(Icons.exit_to_app),
             onPressed: () async {
-              provider.logout();
+              provider.disconnect();
+              await authProvider.logout();
               await reownProvider.logout();
               if (context.mounted) {
                 Navigator.pushReplacementNamed(context, '/');

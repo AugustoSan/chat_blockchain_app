@@ -1,3 +1,4 @@
+import 'package:chat_blockchain_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:chat_blockchain_app/providers/chat_provider.dart';
@@ -16,15 +17,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ChatProvider>(context);
-    final messages = provider.messages;
+    final chatProvider = Provider.of<ChatProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final myAddress = authProvider.userAddress;
+    final messages = chatProvider.messages;
     print(messages);
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('From: ${provider.myAddress}', style: TextStyle(fontSize: 16),),
+            Text('From: ${myAddress}', style: TextStyle(fontSize: 16),),
             Text('To  : ${widget.contactAddress}', style: TextStyle(fontSize: 16),),
           ],
         ),
@@ -37,7 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
               itemCount: messages.length,
               itemBuilder: (_, i) => MessageBubble(
                 message: messages[i],
-                isMe: messages[i].from == provider.myAddress,
+                isMe: messages[i].from == myAddress,
               ),
             ),
           ),
@@ -56,7 +59,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   onPressed: () {
                     final text = _controller.text.trim();
                     if (text.isNotEmpty) {
-                      provider.sendMessage(widget.contactAddress, text);
+                      chatProvider.sendMessage(widget.contactAddress, text);
                       _controller.clear();
                     }
                   },

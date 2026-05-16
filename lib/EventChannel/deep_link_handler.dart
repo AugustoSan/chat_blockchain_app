@@ -1,10 +1,11 @@
 import 'package:flutter/services.dart';
-import 'package:reown_appkit/modal/i_appkit_modal_impl.dart';
+import 'package:reown_appkit/modal/appkit_modal_impl.dart';
+// import 'package:reown_appkit/modal/i_appkit_modal_impl.dart';
 
 class DeepLinkHandler {
   static const _eventChannel = EventChannel('chat_blockchain_app/events');
   static const _methodChannel = MethodChannel('chat_blockchain_app/methods');
-  static late IReownAppKitModal _appKitModal;
+  static late ReownAppKitModal _appKitModal;
 
   static void initEventChannel() {
     try {
@@ -14,7 +15,7 @@ class DeepLinkHandler {
     }
   }
 
-  static void initMethodChannel(IReownAppKitModal appKitModal) {
+  static void initMethodChannel(ReownAppKitModal appKitModal) {
     _appKitModal = appKitModal;
   }
 
@@ -29,6 +30,7 @@ class DeepLinkHandler {
   static void _onLink(dynamic link) async {
     try {
       _appKitModal.dispatchEnvelope(link);
+      print(link);
     } catch (e) {
       print(e);
     }

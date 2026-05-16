@@ -1,3 +1,4 @@
+import 'package:chat_blockchain_app/providers/auth_provider.dart';
 import 'package:chat_blockchain_app/providers/contacts_provider.dart';
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
 import 'package:chat_blockchain_app/screens/login_screen_wallet.dart';
@@ -19,6 +20,7 @@ void main() async {
         ChangeNotifierProvider.value(value: contactsProvider),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ReownProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MyApp(),
     )

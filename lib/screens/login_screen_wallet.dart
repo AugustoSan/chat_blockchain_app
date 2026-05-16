@@ -1,6 +1,7 @@
 // lib/screens/login_screen.dart
 import 'dart:ui';
-import 'package:chat_blockchain_app/providers/chat_provider.dart';
+import 'package:chat_blockchain_app/providers/auth_provider.dart';
+// import 'package:chat_blockchain_app/providers/chat_provider.dart';
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
 import 'package:chat_blockchain_app/screens/contacts_screen.dart';
 import 'package:chat_blockchain_app/widgets/loading_indicator.dart';
@@ -33,11 +34,15 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
     // Verificamos si es nulo antes de usarlo
     if (_reownProvider != null && _reownProvider!.appKitModal == null) {
       await _reownProvider!.initAppKitModal();
+
+      if((_reownProvider!.isConnected)) {
+      }
     }
 
     if (mounted) {
       setState(() {});
     }
+
   }
 
   void _handleStateChange() {
@@ -56,20 +61,21 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
     try {
       // Mostrar un loader (puedes usar un showDialog con un CircularProgressIndicator)
       _showLoading();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final reownProvider = Provider.of<ReownProvider>(context, listen: false);
 
-      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-      
-      // Ejecutamos la firma y el login al API
-      await chatProvider.authenticate(context);
+      await authProvider.login(context, reownProvider);
       
       if (mounted) {
-        // Si todo sale bien, navegamos
-        Navigator.pop(context); // Quitar loader
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => ContactsScreen()),
-          (route) => false,
-        );
+        if(authProvider.isLoggedIn) {
+          // Si todo sale bien, navegamos
+          Navigator.pop(context); // Quitar loader
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => ContactsScreen()),
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
       if (mounted) Navigator.pop(context); // Quitar loader
@@ -86,9 +92,26 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isLoggedIn) {
+      // Redirige inmediatamente después de que el contexto esté listo
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ContactsScreen()));
+      });
+    }
+
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appKitModal = _reownProvider?.appKitModal;
     final isConnected = _reownProvider?.appKitModal?.isConnected ?? false;
+
+    print("DEBUG: isConnected: $isConnected");
+    print("DEBUG: appKitModal: $appKitModal");
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -248,61 +271,22 @@ class _LoginScreenWalletState extends State<LoginScreenWallet> {
                                 ),
                               ),
                               const SizedBox(height: 32),
-                              // Botón principal Connect Wallet
-                              // ElevatedButton(
-                              //   onPressed: () {},
-                              //   style: ElevatedButton.styleFrom(
-                              //     backgroundColor: Colors.transparent,
-                              //     shadowColor: Colors.transparent,
-                              //     padding: const EdgeInsets.symmetric(vertical: 18),
-                              //     minimumSize: const Size(double.infinity, 56),
-                              //     shape: RoundedRectangleBorder(
-                              //       borderRadius: BorderRadius.circular(16),
-                              //     ),
-                              //   ).copyWith(
-                              //     foregroundColor: MaterialStateProperty.all(
-                              //       const Color(0xFF00354A),
-                              //     ),
-                              //     textStyle: MaterialStateProperty.all(
-                              //       const TextStyle(
-                              //         fontFamily: 'SpaceGrotesk',
-                              //         fontSize: 24,
-                              //         fontWeight: FontWeight.w500,
-                              //       ),
-                              //     ),
-                              //   ),
-                              //   child: Ink(
-                              //     decoration: BoxDecoration(
-                              //       gradient: const LinearGradient(
-                              //         colors: [Color(0xFF8ED5FF), Color(0xFF45E3CE)],
-                              //       ),
-                              //       borderRadius: BorderRadius.circular(16),
-                              //     ),
-                              //     child: Container(
-                              //       alignment: Alignment.center,
-                              //       child: const Row(
-                              //         mainAxisAlignment: MainAxisAlignment.center,
-                              //         children: [
-                              //           Icon(Icons.account_balance_wallet),
-                              //           SizedBox(width: 8),
-                              //           Text('Connect Wallet'),
-                              //         ],
-                              //       ),
-                              //     ),
-                              //   ),
-                              // ),
-                              const SizedBox(height: 32),
                               // Grid de wallets
                               // AppKitModalConnectButton(appKit: appKitModal, size: BaseButtonSize.big,),
                               AppKitModalAccountButton(
                                 appKitModal: appKitModal,
                                 // custom: _WalletProviderCard(name: 'Connect Wallet', color: Color(0xFFF6851B), icon: Icons.token, onPressed: appKitModal.openModalView),
-                                custom: _WalletProviderCard(name: isConnected ? "Firmar Mensaje y Entrar" : "Conectar Wallet", color: Color(0xFFAB9FF2), icon: Icons.diamond, onPressed: () async {
-                                  if(!isConnected)
-                                    appKitModal.openModalView();
-                                  else
-                                    _startLoginFlow();
-                                }),
+                                custom: _WalletProviderCard(
+                                  name: isConnected ? "Firmar Mensaje y Entrar" : "Conectar Wallet", 
+                                  color: Color(0xFFAB9FF2), 
+                                  icon: Icons.diamond, 
+                                  onPressed: () async {
+                                    if(!isConnected)
+                                      appKitModal.openModalView();
+                                    else
+                                      _startLoginFlow();
+                                  },
+                                ),
                               ),
                               SizedBox(width: 16),
                               Visibility(
