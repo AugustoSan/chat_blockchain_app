@@ -1,6 +1,7 @@
 import 'package:chat_blockchain_app/providers/auth_provider.dart';
 import 'package:chat_blockchain_app/providers/contacts_provider.dart';
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
+import 'package:chat_blockchain_app/theme.dart';
 // import 'package:chat_blockchain_app/screens/login_screen_wallet.dart';
 import 'package:chat_blockchain_app/utils/keys.dart';
 import 'package:flutter/material.dart';
@@ -42,7 +43,8 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
         title: 'Chat Blockchain',
-        theme: ThemeData(primarySwatch: Colors.blue),
+        theme: appDarkTheme(),
+        themeMode: ThemeMode.dark,
         initialRoute: '/',
         routes: {
           // '/': (context) => LoginScreenWallet(),
