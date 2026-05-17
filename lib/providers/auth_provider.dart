@@ -1,6 +1,7 @@
 import 'package:chat_blockchain_app/providers/reown_provider.dart';
 import 'package:chat_blockchain_app/services/api_service.dart';
 import 'package:chat_blockchain_app/services/secure_storage.dart';
+import 'package:chat_blockchain_app/services/wallet_service.dart';
 import 'package:flutter/material.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -63,31 +64,44 @@ class AuthProvider extends ChangeNotifier {
     return await _api.getChallenge(_userAddress!);
   }
 
-  Future<void> login(BuildContext context, ReownProvider reownProvider) async {
-    // 1. Verificar que la wallet ESTÁ conectada (WalletConnect)
-    if (!reownProvider.isConnected) {
-      throw Exception("Primero debes conectar tu wallet");
-    }
+  // Future<void> login(BuildContext context, ReownProvider reownProvider) async {
+  //   // 1. Verificar que la wallet ESTÁ conectada (WalletConnect)
+  //   if (!reownProvider.isConnected) {
+  //     throw Exception("Primero debes conectar tu wallet");
+  //   }
 
-    final address = reownProvider.getAddress();
+  //   final address = reownProvider.getAddress();
 
-    if (address == null) {
-      print("Error: No se pudo obtener la dirección del proveedor Reown.");
-      return;
-    }
+  //   if (address == null) {
+  //     print("Error: No se pudo obtener la dirección del proveedor Reown.");
+  //     return;
+  //   }
     
-    final challenge = await _api.getChallenge(address);
-    final signatureFuture = await reownProvider.signMessage(challenge);
+  //   final challenge = await _api.getChallenge(address);
+  //   final signatureFuture = await reownProvider.signMessage(challenge);
 
-    if(signatureFuture == null) {
-      print("Error: No se pudo obtener la firma del mensaje.");
-      return;
+  //   if(signatureFuture == null) {
+  //     print("Error: No se pudo obtener la firma del mensaje.");
+  //     return;
+  //   }
+
+  //   final loginData  = await _api.login(address, signatureFuture, challenge);
+  //   final jwt = loginData['token']!;
+  //   await saveSession(jwt, address);
+  //   notifyListeners();
+  // }
+
+  Future<void> loginWithWalletService(String address) async {
+    try {
+      final challenge = await _api.getChallenge(address);
+      final signature = await WalletService.signMessage(challenge);
+      final loginData  = await _api.login(address, signature, challenge);
+      final jwt = loginData['token']!;
+      await saveSession(jwt, address);
+      notifyListeners(); 
+    } catch (e) {
+      print("Error logging in with wallet service: $e");
     }
-
-    final loginData  = await _api.login(address, signatureFuture, challenge);
-    final jwt = loginData['token']!;
-    await saveSession(jwt, address);
-    notifyListeners();
   }
 
   Future<void> logout() async {

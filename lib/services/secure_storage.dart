@@ -5,17 +5,23 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'package:web3dart/web3dart.dart';
 
 class SecureStorage {
-  static const _storage = FlutterSecureStorage();
+  static const _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
   static const _keyPrivate = 'private_key';
   static const _keyAddress = 'address';
   static const _keyPublicKey = 'public_key';
   static const _keyJwt = 'jwt';
   static const _keyContacts = 'contacts';
   static const _wcSession = 'session';
+  static const _mnemonicKey = 'user_mnemonic';
 
   static Future<void> savePrivateKey(String privateKeyHex) async =>
       await _storage.write(key: _keyPrivate, value: privateKeyHex);
-    
+
+  static Future<void> saveMnemonic(String mnemonic) async =>
+      await _storage.write(key: _mnemonicKey, value: mnemonic);
+
   static Future<void> saveSession(Object session) async =>
       await _storage.write(key: _wcSession, value: jsonEncode(session));
     

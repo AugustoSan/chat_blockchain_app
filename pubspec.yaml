@@ -48,6 +48,8 @@ dependencies:
   qr_flutter: ^4.1.0
   reown_appkit: ^1.7.6
   app_links: ^7.0.0
+  bip39: ^1.0.6
+  bip32: ^2.0.0
 
 dev_dependencies:
   flutter_test:
